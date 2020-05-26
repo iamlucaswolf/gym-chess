@@ -7,6 +7,8 @@ underlying game mechanics.
 
 """
 
+from typing import Tuple, Optional, Dict, Union, List
+
 import chess
 import gym
 
@@ -65,23 +67,23 @@ class Chess(gym.Env):
     reward_range = (-1, 1)
     
     """Maps game outcomes returned by `chess.Board.result()` to rewards."""
-    _rewards = {
+    _rewards: Dict[str, float] = {
         '*':        0.0, # Game not over yet
         '1/2-1/2':  0.0, # Draw
         '1-0':     +1.0, # White wins
         '0-1':     -1.0, # Black wins
     }
 
-    def __init__(self):
+    def __init__(self) -> None:
         #: The underlying chess.Board instance that represents the game.
-        self._board = None
+        self._board: Optional[chess.Board] = None
 
         #: Indicates whether the env has been reset since it has been created
         #: or the previous game has ended.
-        self._ready = False
+        self._ready: bool = False
 
 
-    def reset(self):
+    def reset(self) -> chess.Board:
 
         self._board = chess.Board()
         self._ready = True
@@ -89,7 +91,7 @@ class Chess(gym.Env):
         return self._observation()
 
 
-    def step(self, action):
+    def step(self, action: chess.Move) -> Tuple[chess.Board, float, bool, None]:
 
         assert self._ready, "Cannot call env.step() before calling reset()"
 
@@ -110,7 +112,7 @@ class Chess(gym.Env):
         return observation, reward, done, None
 
 
-    def render(self, mode='unicode'):
+    def render(self, mode: str = 'unicode') -> Union[str, None]:
         """
         Renders the current board position.
 
@@ -133,17 +135,17 @@ class Chess(gym.Env):
 
 
     @property
-    def legal_moves(self):
+    def legal_moves(self) -> List[chess.Move]:
         """Legal moves for the current player."""
         return list(self._board.legal_moves)
     
 
-    def _observation(self):
+    def _observation(self) -> chess.Board:
         """Returns the current board position."""
         return self._board.copy()
 
 
-    def _reward(self):
+    def _reward(self) -> float:
         """Returns the reward for the most recent move."""
         result = self._board.result()
         reward = Chess._rewards[result]
@@ -151,7 +153,7 @@ class Chess(gym.Env):
         return reward
 
     
-    def _repr_svg_(self):
+    def _repr_svg_(self) -> str:
         """Returns an SVG representation of the current board position"""
         board = self._board if self._board else chess.Board()
         return str(board._repr_svg_())
