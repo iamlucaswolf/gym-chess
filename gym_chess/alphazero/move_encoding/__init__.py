@@ -90,8 +90,9 @@ class MoveEncoding(gym.ActionWrapper):
         # in the action array associated with the given move type, the `decode` 
         # function in the resepctive helper module will return None.
 
-        if move := queenmoves.decode(action):
+        move = queenmoves.decode(action)
 
+        if move:
             # Moving a pawn from the 7th to the 8th rank with a queen move
             # is automatically assumed to be queen underpromotion. However,
             # since queenmoves has no reference to the board and can thus not
@@ -106,7 +107,7 @@ class MoveEncoding(gym.ActionWrapper):
             if is_pawn and is_promoting_move:
                 move.promotion = chess.QUEEN
 
-        if not move:
+        else:
             move = knightmoves.decode(action)
 
         if not move:
