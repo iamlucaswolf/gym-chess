@@ -38,6 +38,8 @@ Let's watch a random agent play against itself:
 
 ## Installation
 
+gym-chess requires Python 3.6 or later.
+
 To install gym-chess, run:
 
 ```shell
