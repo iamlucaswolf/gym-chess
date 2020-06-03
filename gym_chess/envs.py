@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
-"""Base OpenAI Gym environment for the game of chess.
+"""Base environment for the game of chess.
 
-This module contains a basic `Chess` environment for OpenAI Gym. It wraps the 
-excellent `python-chess` package by Niklas Fiekas, which implements the 
-underlying game mechanics.
+This module contains a basic `Chess` environment. It relies heavily on the 
+`python-chess` package, which implements the underlying game mechanics.
 
 """
 
-from typing import Tuple, Optional, Dict, Union, List
+from typing import Tuple, Optional, Dict, List
 
 import chess
 import gym
@@ -112,7 +111,7 @@ class Chess(gym.Env):
         return observation, reward, done, None
 
 
-    def render(self, mode: str = 'unicode') -> Union[str, None]:
+    def render(self, mode: str = 'unicode') -> Optional[str]:
         """
         Renders the current board position.
 
@@ -131,12 +130,14 @@ class Chess(gym.Env):
             return board.unicode()
         
         else:
-            super(Chess, self).render(mode=mode)
+            return super(Chess, self).render(mode=mode)
 
 
     @property
     def legal_moves(self) -> List[chess.Move]:
         """Legal moves for the current player."""
+        assert self._ready, "Cannot compute legal moves before calling reset()"
+
         return list(self._board.legal_moves)
     
 
