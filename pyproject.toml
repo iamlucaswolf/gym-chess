@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "gym-chess"
-version = "0.1.0"
+version = "0.1.1"
 description = "OpenAI Gym environments for Chess"
 authors = ["Lucas Wolf <iamlucaswolf@gmail.com>"]
 license = "GPL-3.0-or-later"

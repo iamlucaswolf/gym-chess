@@ -46,8 +46,7 @@ class MoveEncoding(gym.ActionWrapper):
     player on a rotated board.
     """
 
-    # TODO how to type env
-    def __init__(self, env) -> None:
+    def __init__(self, env: gym.Env) -> None:
         super(MoveEncoding, self).__init__(env)
         self.action_space = gym.spaces.Discrete(8 * 8 * 73)
 
@@ -83,31 +82,15 @@ class MoveEncoding(gym.ActionWrapper):
             ValueError: If `action` is not a valid action. 
         """
 
-        #index = np.unravel_index(action, (8, 8, 73))
-
         # Successively try to decode the given action as a queen move, knight 
         # move, or underpromotion. If `index` does not reference the region
         # in the action array associated with the given move type, the `decode` 
         # function in the resepctive helper module will return None.
 
         move = queenmoves.decode(action)
+        is_queen_move = move is not None
 
-        if move:
-            # Moving a pawn from the 7th to the 8th rank with a queen move
-            # is automatically assumed to be queen underpromotion. However,
-            # since queenmoves has no reference to the board and can thus not
-            # determine whether the moved piece is a pawn, we have to add this
-            # information manually here
-
-            is_promoting_move = chess.square_rank(move.to_square) == 7
-
-            piece = self.unwrapped._board.piece_at(move.from_square)
-            is_pawn = piece.piece_type == chess.PAWN
-
-            if is_pawn and is_promoting_move:
-                move.promotion = chess.QUEEN
-
-        else:
+        if not move:
             move = knightmoves.decode(action)
 
         if not move:
@@ -118,8 +101,29 @@ class MoveEncoding(gym.ActionWrapper):
 
         # Actions encode moves from the perspective of the current player. If
         # this is the black player, the move must be reoriented.
-        if self.unwrapped._board.turn == chess.BLACK:
+        turn = self.unwrapped._board.turn
+        
+        if turn == chess.BLACK:
             move = utils.rotate(move)
+
+        # Moving a pawn to the opponent's home rank with a queen move
+        # is automatically assumed to be queen underpromotion. However,
+        # since queenmoves has no reference to the board and can thus not
+        # determine whether the moved piece is a pawn, we have to add this
+        # information manually here
+        if is_queen_move:
+            to_rank = chess.square_rank(move.to_square)
+            is_promoting_move = (
+                (to_rank == 7 and turn == chess.WHITE) or 
+                (to_rank == 0 and turn == chess.BLACK)
+            )
+
+
+            piece = self.unwrapped._board.piece_at(move.from_square)
+            is_pawn = piece.piece_type == chess.PAWN
+
+            if is_pawn and is_promoting_move:
+                move.promotion = chess.QUEEN
 
         return move
 
@@ -146,16 +150,16 @@ class MoveEncoding(gym.ActionWrapper):
 
         action = queenmoves.encode(move)
 
-        if not action:
+        if action is None:
             action = knightmoves.encode(move)
 
-        if not action:
+        if action is None:
             action = underpromotions.encode(move)
 
         # If the move doesn't belong to any move type (i.e. every `encode` 
         # functions returned None), it is considered to be invalid.
 
-        if not action:
+        if action is None:
             raise ValueError(f"{move} is not a valid move")
 
         #action = np.ravel_multi_index(
