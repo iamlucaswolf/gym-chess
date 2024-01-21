@@ -56,9 +56,9 @@ class BoardEncoding(gym.ObservationWrapper):
         
         self.observation_space = spaces.Box(
             low=0,
-            high=np.iinfo(np.int).max,
+            high=np.iinfo(np.int32).max,
             shape=(8, 8, history_length * 14 + 7),
-            dtype=np.int
+            dtype=np.int32
         )
 
 
@@ -77,7 +77,7 @@ class BoardEncoding(gym.ObservationWrapper):
             observations returned by the wrapped env's step() method. In 
             particular, calling this method will add the given board position
             to the history. Do NOT call this method manually to recover a 
-            previous observation returned by step().
+            previous observation returned by step(). Use get_observation() instead.
         """
 
         self._history.push(board)
@@ -86,7 +86,41 @@ class BoardEncoding(gym.ObservationWrapper):
         
         meta = np.zeros(
             shape=(8 ,8, 7),
-            dtype=np.int
+            dtype=np.int32
+        )
+    
+        # Active player color
+        meta[:, :, 0] = int(board.turn)
+    
+        # Total move count
+        meta[:, :, 1] = board.fullmove_number
+
+        # Active player castling rights
+        meta[:, :, 2] = board.has_kingside_castling_rights(board.turn)
+        meta[:, :, 3] = board.has_queenside_castling_rights(board.turn)
+    
+        # Opponent player castling rights
+        meta[:, :, 4] = board.has_kingside_castling_rights(not board.turn)
+        meta[:, :, 5] = board.has_queenside_castling_rights(not board.turn)
+    
+        # No-progress counter
+        meta[:, :, 6] = board.halfmove_clock
+
+        observation = np.concatenate([history, meta], axis=-1)
+        return observation
+    
+    def get_observation(self) -> np.array:
+        """Converts chess.Board observations instance to numpy arrays.
+        
+        Note: 
+            Use this instead of observation() to get the current observation.
+        """
+        board = self.env._board
+        history = self._history.view(orientation=board.turn)
+        
+        meta = np.zeros(
+            shape=(8 ,8, 7),
+            dtype=np.int32
         )
     
         # Active player color
@@ -128,7 +162,7 @@ class BoardHistory:
 
         #: Ring buffer of recent board encodings; stored boards are always
         #: oriented towards the White player. 
-        self._buffer = np.zeros((length, 8, 8, 14), dtype=np.int)
+        self._buffer = np.zeros((length, 8, 8, 14), dtype=np.int32)
 
 
     def push(self, board: chess.Board) -> None:
@@ -147,7 +181,7 @@ class BoardHistory:
     def encode(self, board: chess.Board) -> np.array:
         """Converts a board to numpy array representation."""
 
-        array = np.zeros((8, 8, 14), dtype=np.int)
+        array = np.zeros((8, 8, 14), dtype=np.int32)
 
         for square, piece in board.piece_map().items():
             rank, file = chess.square_rank(square), chess.square_file(square)
