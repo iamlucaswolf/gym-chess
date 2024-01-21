@@ -56,9 +56,9 @@ class BoardEncoding(gym.ObservationWrapper):
         
         self.observation_space = spaces.Box(
             low=0,
-            high=np.iinfo(np.int).max,
+            high=np.iinfo(np.int32).max,
             shape=(8, 8, history_length * 14 + 7),
-            dtype=np.int
+            dtype=np.int32
         )
 
 
@@ -86,7 +86,7 @@ class BoardEncoding(gym.ObservationWrapper):
         
         meta = np.zeros(
             shape=(8 ,8, 7),
-            dtype=np.int
+            dtype=np.int32
         )
     
         # Active player color
@@ -128,7 +128,7 @@ class BoardHistory:
 
         #: Ring buffer of recent board encodings; stored boards are always
         #: oriented towards the White player. 
-        self._buffer = np.zeros((length, 8, 8, 14), dtype=np.int)
+        self._buffer = np.zeros((length, 8, 8, 14), dtype=np.int32)
 
 
     def push(self, board: chess.Board) -> None:
@@ -147,7 +147,7 @@ class BoardHistory:
     def encode(self, board: chess.Board) -> np.array:
         """Converts a board to numpy array representation."""
 
-        array = np.zeros((8, 8, 14), dtype=np.int)
+        array = np.zeros((8, 8, 14), dtype=np.int32)
 
         for square, piece in board.piece_map().items():
             rank, file = chess.square_rank(square), chess.square_file(square)
