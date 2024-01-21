@@ -77,11 +77,45 @@ class BoardEncoding(gym.ObservationWrapper):
             observations returned by the wrapped env's step() method. In 
             particular, calling this method will add the given board position
             to the history. Do NOT call this method manually to recover a 
-            previous observation returned by step().
+            previous observation returned by step(). Use get_observation() instead.
         """
 
         self._history.push(board)
 
+        history = self._history.view(orientation=board.turn)
+        
+        meta = np.zeros(
+            shape=(8 ,8, 7),
+            dtype=np.int32
+        )
+    
+        # Active player color
+        meta[:, :, 0] = int(board.turn)
+    
+        # Total move count
+        meta[:, :, 1] = board.fullmove_number
+
+        # Active player castling rights
+        meta[:, :, 2] = board.has_kingside_castling_rights(board.turn)
+        meta[:, :, 3] = board.has_queenside_castling_rights(board.turn)
+    
+        # Opponent player castling rights
+        meta[:, :, 4] = board.has_kingside_castling_rights(not board.turn)
+        meta[:, :, 5] = board.has_queenside_castling_rights(not board.turn)
+    
+        # No-progress counter
+        meta[:, :, 6] = board.halfmove_clock
+
+        observation = np.concatenate([history, meta], axis=-1)
+        return observation
+    
+    def get_observation(self) -> np.array:
+        """Converts chess.Board observations instance to numpy arrays.
+        
+        Note: 
+            Use this instead of observation() to get the current observation.
+        """
+        board = self.env._board
         history = self._history.view(orientation=board.turn)
         
         meta = np.zeros(

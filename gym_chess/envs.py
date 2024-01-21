@@ -131,6 +131,18 @@ class Chess(gym.Env):
         
         else:
             return super(Chess, self).render(mode=mode)
+        
+
+    @property
+    def reward(self) -> float:
+        """Returns the reward for the most recent move."""
+        return self._reward()
+
+
+    @property
+    def done(self) -> bool:
+        """Checks if game is over."""
+        return  self._board.is_game_over()
 
 
     @property
